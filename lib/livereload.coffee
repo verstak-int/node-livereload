@@ -105,7 +105,7 @@ class Server
     aliasExt  = @config.alias[ext]
     if aliasExt?
       @debug "and aliased to #{aliasExt}"
-      filepath = filepath.replace(ext, ".#{aliasExt}")
+      filepath = filepath.replace("." + ext, ".#{aliasExt}")
       
     data = JSON.stringify ['refresh',
       path: filepath,
