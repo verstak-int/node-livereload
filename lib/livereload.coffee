@@ -3,6 +3,7 @@ path = require 'path'
 ws   = require 'websocket.io'
 http  = require 'http'
 url = require 'url'
+watchr = require('watchr')
 
 version = '1.6'
 defaultPort = 35729
@@ -13,6 +14,9 @@ defaultExts = [
 ]
 
 defaultExclusions = ['.git/', '.svn/', '.hg/']
+
+
+wait = (milliseconds, func) -> setTimeout func, milliseconds
 
 class Server
   constructor: (@config) ->
@@ -56,7 +60,8 @@ class Server
     
   onClose: (socket) ->
     @debug "Browser disconnected."
-
+  
+  ###
   walkTree: (dirname, callback) ->
     exts       = @config.exts
     exclusions = @config.exclusions
@@ -87,6 +92,22 @@ class Server
       fs.watchFile filename, (curr, prev) =>
         if curr.mtime > prev.mtime
           @refresh filename
+  ###
+
+  watch: (source)=>
+
+    # Watch a directory or file
+    exts       = @config.exts
+    exclusions = @config.exclusions
+
+    watchr.watch
+      path: path
+      listener: (eventName, filePath, fileCurrentStat, filePreviousStat)->
+        for ext in exts when filePath.match "\.#{ext}$"
+          @refresh(filePath)
+          console.log(filePath, "isChanged")
+      ignorePatterns: @config.exclusions
+    
 
   refresh: (path) ->
     @debug "Refresh: #{path}"
@@ -114,3 +135,4 @@ exports.createServer = (config) ->
   server = new Server config
   server.listen()
   server
+
