@@ -77,6 +77,7 @@ class Server
 
     watchr.watch
       path: source
+      ignoreHiddenFiles: yes
       listener: (eventName, filePath, fileCurrentStat, filePreviousStat)=>
 
         for exclusion in exclusions
