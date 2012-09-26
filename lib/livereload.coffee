@@ -69,39 +69,6 @@ class Server
   onClose: (socket) ->
     @debug "Browser disconnected."
   
-  ###
-  walkTree: (dirname, callback) ->
-    exts       = @config.exts
-    exclusions = @config.exclusions
-
-    walk = (dirname) ->
-      fs.readdir dirname, (err, files) ->
-        if err then return callback err
-
-        files.forEach (file) ->
-          filename = path.join dirname, file
-
-          for exclusion in exclusions
-            return if filename.match exclusion
-
-          fs.stat filename, (err, stats) ->
-            if !err and stats.isDirectory()
-              walk filename
-            else
-              for ext in exts when filename.match "\.#{ext}$"
-                callback err, filename
-                break
-
-    walk dirname, callback
-
-  watch: (dirname) ->
-    @walkTree dirname, (err, filename) =>
-      throw err if err
-      fs.watchFile filename, (curr, prev) =>
-        if curr.mtime > prev.mtime
-          @refresh filename
-  ###
-
   watch: (source)=>
 
     # Watch a directory or file
@@ -109,12 +76,14 @@ class Server
     exclusions = @config.exclusions
 
     watchr.watch
-      path: path
-      listener: (eventName, filePath, fileCurrentStat, filePreviousStat)->
+      path: source
+      listener: (eventName, filePath, fileCurrentStat, filePreviousStat)=>
+
+        for exclusion in exclusions
+          return if filePath.match exclusion
+        
         for ext in exts when filePath.match "\.#{ext}$"
           @refresh(filePath)
-          console.log(filePath, "isChanged")
-      ignorePatterns: @config.exclusions
     
 
   refresh: (filepath) ->
