@@ -17,7 +17,7 @@ runner = ->
     {
       short: "c"
       long:  "config"
-      description: "specify the JSON config file"
+      description: "Specify the JSON config file"
       value: true
       required: false
     }
