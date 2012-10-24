@@ -27,7 +27,8 @@ describe 'livereload http file serving', ->
 
     ws = new WebSocket('ws://localhost:35729/livereload')
     ws.on 'message', (data, flags) ->
-      data.should.equal '!!ver:1.6'
+      data = JSON.parse(data)
+      data.protocols[0].should.include 'official-7'
 
       server.config.server.close()
 
