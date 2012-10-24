@@ -12,6 +12,8 @@ To use livereload from the command line:
     $ npm install -g livereload
     $ livereload [path]
 
+For options:
+    $ livereload --help
     
 
 Or to use the api within a project:
@@ -40,13 +42,22 @@ You can also use this with a Connect server:
 
 The `createServer()` method supports a few basic options, passed as a JavaScript object:
 
-* `port` is the listening port. It defaults to `35729` which is what the LiveReload extensions use currently.
+* `port` is the listening port. It defaults to `35729` which is what the LiveReload extensions use currently.  
 * `exts` is an array of extensions you want to observe. The default extensions are  `html`, `css`, `js`, `png`, `gif`, `jpg`,
   `php`, `php5`, `py`, `rb`, and `erb`
 * `applyJSLive` tells LiveReload to reload JavaScript files in the background instead of reloading the page. The default for this is `false`.
 * `applyCSSLive` tells LiveReload to reload CSS files in the background instead of refreshing the page. The default for this is `true`.
 * `exclusions` lets you specify files to ignore. By default, this includes `.git/`, `.svn/`, and `.hg/`
 * `alias` lets you specify file extensions to be aliased. By default, this maps `.styl` to `.css`, by which, changing `.styl` file never fires full page reload.
+* `delay` delay in ms before refresh (default: 50)  
+
+# Trigger refresh programmatically
+
+The server is listening for post request on "/reload".
+
+    request = require('request');
+    request.post('http://localhost:35729/reload');
+
 
 # Limitations
 
