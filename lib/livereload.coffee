@@ -5,44 +5,27 @@ http  = require 'http'
 express  = require 'express'
 url = require 'url'
 watchr = require('watchr')
+_ = require 'underscore'
 
-version ='7'
-defaultPort = 35729
-
-defaultExts = [
-  'html', 'css', 'js', 'png', 'gif', 'jpg',
-  'php', 'php5', 'py', 'rb', 'erb', 'jade'
-]
-
-defaultAlias =
-  'styl': 'css'
-
-defaultExclusions = ['.git/', '.svn/', '.hg/']
-
-merge = (obj1, obj2) ->
-  _obj = {}
-  _obj[key] = value for key, value of obj1
-  _obj[key] = value for key, value of obj2
-  _obj
+DEFAULT_CONFIG =
+  version: '7'
+  port: 35729
+  delay: 50
+  exts: [
+    'html', 'css', 'js', 'png', 'gif', 'jpg',
+    'php', 'php5', 'py', 'rb', 'erb', 'jade'
+  ]
+  alias:
+    'styl': 'css'
+  exclusions: ['.git/', '.svn/', '.hg/']
+  applyJSLive: false
+  applyCSSLive: true
 
 class Server
+
   constructor: (@config) ->
-    @config ?= {}
-
-    @config.version ?= version
-    @config.port    ?= defaultPort
-
-    @config.exts       ?= []
-    @config.exclusions ?= []
-    @config.alias      ?= {}
-
-    @config.exts       = @config.exts.concat defaultExts
-    @config.exclusions = @config.exclusions.concat defaultExclusions
-    @config.alias      = merge( defaultAlias, @config.alias )
-
-    @config.applyJSLive  ?= false
-    @config.applyCSSLive ?= true
-
+    @config = _.defaults @config or {}, DEFAULT_CONFIG
+    
     @sockets = []
     
   listen: ->
@@ -77,7 +60,7 @@ class Server
     @debug "Browser disconnected."
   
   watch: (source)=>
-
+    
     # Watch a directory or file
     exts       = @config.exts
     exclusions = @config.exclusions
@@ -86,14 +69,14 @@ class Server
       path: source
       ignoreHiddenFiles: yes
       listener: (eventName, filePath, fileCurrentStat, filePreviousStat)=>
-
+        
         for exclusion in exclusions
           return if filePath.match exclusion
         
         for ext in exts when filePath.match "\.#{ext}$"
           setTimeout =>
             @reloadFile(filePath)
-          , 50
+          , @config.delay
     
   reloadFile: (filepath) ->
     @debug "Reload file: #{filepath}"
@@ -126,7 +109,9 @@ class Server
   debug: (str) ->
     if @config.debug
       console.log "#{str}\n"
-      
+
+exports.DEFAULT_CONFIG = DEFAULT_CONFIG
+  
 exports.createServer = (config = {}) ->
   server = new Server config
 
@@ -136,7 +121,9 @@ exports.createServer = (config = {}) ->
     app.get '/livereload.js', (req, res) ->
       res.sendfile "#{__dirname}/../ext/livereload.js"
     app.post '/reload', (req, res) -> 
-      do server.reloadAll
+      setTimeout =>
+        do server.reloadAll
+      , server.config.delay
       res.send ""
     config.server = http.createServer app
 
