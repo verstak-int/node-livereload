@@ -1,3 +1,5 @@
+fs = require 'fs'
+
 runner = ->
 
   livereload = require './livereload'
@@ -11,16 +13,29 @@ runner = ->
       description: "Specify the port"
       value: true
       required: false
+    },
+    {
+      short: "c"
+      long:  "config"
+      description: "specify the JSON config file"
+      value: true
+      required: false
     }
   ].reverse(), true
 
-  port = opts.get('port') || 35729
+  config = {}
+  if opts.get('config')?
+    config = JSON.parse fs.readFileSync(opts.get('config'))
 
-  server = livereload.createServer({port: port, debug: true})
+  config.port = opts.get('port') or config.port 
+ 
+  config.debug ?= true
+
+  server = livereload.createServer(config)
 
   path = resolve(process.argv[2] || '.')
 
-  console.log('Starting LiveReload for ' + path)
+  console.log("Starting LiveReload on port #{server.config.port} for #{path}")
 
   server.watch(path)
 
