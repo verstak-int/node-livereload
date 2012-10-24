@@ -6,12 +6,12 @@ express  = require 'express'
 url = require 'url'
 watchr = require('watchr')
 
-version = '1.6'
+version ='7'
 defaultPort = 35729
 
 defaultExts = [
   'html', 'css', 'js', 'png', 'gif', 'jpg',
-  'php', 'php5', 'py', 'rb', 'erb'
+  'php', 'php5', 'py', 'rb', 'erb', 'jade'
 ]
 
 defaultAlias =
@@ -60,7 +60,13 @@ class Server
 
   onConnection: (socket) ->
     @debug "Browser connected."
-    socket.send "!!ver:#{@config.version}"
+    
+    socket.send JSON.stringify 
+      command: 'hello',
+      protocols: [
+        'http://livereload.com/protocols/official-7'
+      ]
+      serverName: 'node-livereload'
 
     socket.on 'message', (message) =>
       @debug "Browser URL: #{message}"
@@ -85,30 +91,42 @@ class Server
           return if filePath.match exclusion
         
         for ext in exts when filePath.match "\.#{ext}$"
-          @refresh(filePath)
+          setTimeout =>
+            @reloadFile(filePath)
+          , 50
     
-
-  refresh: (filepath) ->
-    @debug "Refresh: #{filepath}"
+  reloadFile: (filepath) ->
+    @debug "Reload file: #{filepath}"
     ext       = path.extname(filepath).substr(1)
     aliasExt  = @config.alias[ext]
     if aliasExt?
       @debug "and aliased to #{aliasExt}"
       filepath = filepath.replace("." + ext, ".#{aliasExt}")
       
-    data = JSON.stringify ['refresh',
+    data = JSON.stringify 
+      command: 'reload',
       path: filepath,
-      apply_js_live: @config.applyJSLive,
-      apply_css_live: @config.applyCSSLive
-    ]
+      liveJS: @config.applyJSLive,
+      liveCSS: @config.applyCSSLive
 
+    for socket in @sockets
+      socket.send data
+    
+  reloadAll: -> 
+    @debug "Reload all"
+    data = JSON.stringify 
+      command: 'reload',
+      path: '*'
+      liveJS: false,
+      liveCSS: false
+    
     for socket in @sockets
       socket.send data
 
   debug: (str) ->
     if @config.debug
       console.log "#{str}\n"
-
+      
 exports.createServer = (config = {}) ->
   server = new Server config
 
@@ -117,8 +135,8 @@ exports.createServer = (config = {}) ->
     app.use express.static "#{__dirname}/../ext"
     app.get '/livereload.js', (req, res) ->
       res.sendfile "#{__dirname}/../ext/livereload.js"
-    app.post '/reload', (req, res) ->  
-      do server.refresh
+    app.post '/reload', (req, res) -> 
+      do server.reloadAll
       res.send ""
     config.server = http.createServer app
 
