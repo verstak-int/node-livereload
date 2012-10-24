@@ -2,6 +2,7 @@ fs   = require 'fs'
 path = require 'path'
 ws   = require 'websocket.io'
 http  = require 'http'
+express  = require 'express'
 url = require 'url'
 watchr = require('watchr')
 
@@ -108,15 +109,19 @@ class Server
     if @config.debug
       console.log "#{str}\n"
 
-exports.createServer = (config) ->
-  app = http.createServer ( req, res )->
-    if url.parse(req.url).pathname is '/livereload.js'
-      res.writeHead(200, {'Content-Type': 'text/javascript'})
-      res.end fs.readFileSync __dirname + '/../ext/livereload.js'
-
-  config.server ?= app
-
+exports.createServer = (config = {}) ->
   server = new Server config
+
+  unless config.server?
+    app = express()
+    app.use express.static "#{__dirname}/../ext"
+    app.get '/livereload.js', (req, res) ->
+      res.sendfile "#{__dirname}/../ext/livereload.js"
+    app.post '/reload', (req, res) ->  
+      do server.refresh
+      res.send ""
+    config.server = http.createServer app
+
   server.listen()
   server
 

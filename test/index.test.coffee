@@ -49,3 +49,18 @@ describe 'livereload http file serving', ->
       server.config.server.close()
 
       done()
+     
+
+  it 'should proxy the request request', (done) ->
+    server = livereload.createServer()
+    request
+      method: 'POST',
+      uri: 'http://localhost:35729/reload' 
+      body: "" 
+    , (error, response, body) ->
+        should.not.exist error
+        response.statusCode.should.equal 200
+
+        server.config.server.close()
+
+        done()
