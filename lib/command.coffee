@@ -20,6 +20,13 @@ runner = ->
       description: "Specify the JSON config file"
       value: true
       required: false
+    },
+    {
+      short: "d"
+      long:  "delay"
+      description: "Specify the wait delay (before refresh)."
+      value: true
+      required: false
     }
   ].reverse(), true
 
@@ -28,15 +35,16 @@ runner = ->
     config = JSON.parse fs.readFileSync(opts.get('config'))
 
   config.port = opts.get('port') or config.port 
- 
+  config.delay = opts.get('delay') or config.delay
+
   config.debug ?= true
 
   server = livereload.createServer(config)
 
-  path = resolve(process.argv[2] || '.')
+  path = resolve(opts.args()[0] or '.')
 
   console.log("Starting LiveReload on port #{server.config.port} for #{path}")
-
+  
   server.watch(path)
 
 module.exports =
