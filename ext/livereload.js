@@ -921,6 +921,23 @@ __livereload.LiveReload = LiveReload = (function() {
       serverURL: "http://" + this.options.host + ":" + this.options.port
     });
   };
+  LiveReload.prototype._performReload = LiveReload.prototype.performReload;
+  LiveReload.prototype.performReload = function (cfg) {
+    if (!cfg.path.match(/\.html$/g)) {
+      this._performReload(cfg);
+      return;
+    };
+
+    var curPath = location.pathname;
+
+    if (curPath.match(/\/$/g)) {
+      curPath = curPath +'index.html';
+    };
+
+    if (curPath.match(cfg.path)) {
+      location.reload();
+    };
+  };
 
   LiveReload.prototype.performAlert = function(message) {
     return alert(message.message);
