@@ -1,7 +1,7 @@
 {
   "name": "livereload",
   "description": "this is a version of livereload more recently updated.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "contributors": [
     {
       "name": "Joshua Peek"
